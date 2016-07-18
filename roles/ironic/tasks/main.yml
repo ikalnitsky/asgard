@@ -81,3 +81,11 @@
 
 - name: ensure ironic-conductor is running and enabled at boot
   service: name=ironic-conductor state=started enabled=yes
+
+- name: ensure /var/lib/ironic/.ssh is created
+  file: path=/var/lib/ironic/.ssh state=directory owner=ironic group=ironic
+
+- name: generated ssh key for ansible driver
+  command: ssh-keygen -t rsa -N '' -f /var/lib/ironic/.ssh/id_rsa
+  become_user: ironic
+  become: true
