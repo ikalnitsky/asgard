@@ -1,0 +1,10 @@
+# Example:
+#
+#   iscdhcp_subnets:
+#     - cidr: 192.168.1.0/24
+#       ranges:
+#         - [192.168.1.50, 192.168.1.100]
+#       pxeserver: <boot address>
+#
+#     - ...
+iscdhcp_subnets: []

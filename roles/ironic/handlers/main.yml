@@ -1,0 +1,5 @@
+- name: restart ironic-api
+  service: name=ironic-api state=restarted
+
+- name: restart ironic-conductor
+  service: name=ironic-conductor state=restarted

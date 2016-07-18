@@ -1,0 +1,71 @@
+# {{ ansible_managed }}
+
+[DEFAULT]
+debug = false
+
+# Authentication strategy to use when connecting to glance.
+# Allowed values: keystone, noauth
+auth_strategy = noauth
+
+# Specify the list of drivers to load during service
+# initialization. Missing drivers, or drivers which fail to
+# initialize, will prevent the conductor service from
+# starting.
+enabled_drivers = asgard,{{ ironic_enabled_drivers }}
+
+# A URL representing the messaging driver to use and its full
+# # configuration.
+transport_url = rabbit://{{ ironic_rabbitmq_user }}:{{ ironic_rabbitmq_password }}@{{ ironic_rabbitmq_host }}:5672
+
+
+[database]
+
+# The SQLAlchemy connection string to use to connect to the
+# database.
+connection = mysql+mysqldb://{{ ironic_database_user }}:{{ ironic_database_password}}@{{ ironic_database_host }}/{{ ironic_database_name }}?charset=utf8
+
+
+[conductor]
+# URL of Ironic API service. If not set ironic can get the
+# current value from the keystone service catalog.
+api_url = http://127.0.0.1:6385
+
+# Enables or disables automated cleaning. Automated cleaning
+# is a configurable set of steps, such as erasing disk drives,
+# that are performed on the node to ensure it is in a baseline
+# state and ready to be deployed to. This is done after
+# instance deletion as well as during the transition from a
+# "manageable" to "available" state.
+#
+# So far Asgard has static PXE, so we don't need any cleaning
+# steps to be executed.
+automated_clean = false
+
+
+[dhcp]
+# DHCP provider to use. "neutron" uses Neutron, and "none"
+# uses a no-op provider.
+dhcp_provider = none
+
+
+[asgard]
+# Node driver to use when Asgard's auto-discovery mechanism
+# creates new node. Must be one of DEFAULT/enabled_drivers.
+driver = {{ ironic_asgard_driver }}
+
+
+[asgard:instance_info]
+# These options are automatically passed to node's instance_info when
+# new node is auto-created by Asgard. By default we assume one of
+# Ansible deploy drivers is used.
+image_source = http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+image_checksum = ee1eca47dc88f4879d8a229cc70a07c6
+image_disk_format = qcow2
+
+
+[asgard:{{ ironic_asgard_driver }}]
+# These options are automatically passed to node's driver_info when
+# new node is auto-created by Asgard. We assume one of Ansible deploy
+# drivers is used.
+deploy_username = root
+deploy_key_file = /home/ubuntu/.ssh/id_rsa

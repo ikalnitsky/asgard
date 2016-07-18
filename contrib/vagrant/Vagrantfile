@@ -1,0 +1,68 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  MASTER_IP = "10.0.3.2"
+
+  # Master VM is intended to host all needed software. It's a sort of
+  # management machine.
+  config.vm.define "master", primary: true do |master|
+    master.vm.box = "ubuntu/xenial64"
+    master.vm.network "private_network", ip: MASTER_IP, virtualbox__intnet: "intnet"
+
+    # Ansible requires python2 to be installed, but Ubuntu Xenial doesn't
+    # have one by default. Let's fix it in order to proceed with further
+    # Ansible provisioning.
+    master.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+      apt-get install -y python
+    SHELL
+
+    master.vm.provision "ansible" do |ansible|
+      ansible.extra_vars = {
+        # Deployed PXE server must use private VM network, since it's the
+        # only network with connectivity between VMs.
+        pxe_network: "10.0.3.0/24",
+        pxe_iprange: ["10.0.3.100", "10.0.3.254"],
+
+        # VMs don't have IPMI, so for testing purpose it's better to use
+        # driver variant with fake power management.
+        ironic_asgard_driver: "asgard_ansible_fake",
+
+        # TODO: search for reliable way to get VM's external interface name
+        router_external_interface: "enp0s3",
+      }
+
+      ansible.playbook = File.join(File.dirname(__FILE__), "..", "..", "site.yml")
+      ansible.groups = {
+        routers:    ["master"],
+        databases:  ["master"],
+        brokers:    ["master"],
+        ironic:     ["master"],
+        pxeserver:  ["master"],
+      }
+
+      master.vm.provider "virtualbox" do |vb|
+        vb.memory = 2048
+      end
+    end
+  end
+
+  # Slave VM is an analog of baremetal node that should be booted and
+  # discovered by Master VM.
+  config.vm.define "slave" do |slave|
+    slave.vm.box = "c33s/empty"
+    slave.vm.network "private_network", :adapter=>1, auto_config: false, virtualbox__intnet: "intnet"
+
+    # Since we are booting via PXE, Vagrant knows nothing about SSH
+    # credentials. We need to propagate correct ones if expect
+    # Vagrant to create a correct SSH tunnel.
+    slave.ssh.username = "root"
+    slave.ssh.password = "r00tme"
+
+    # HACK: We don't know for sure what's slave's IP address. However,
+    # we do know DHCP IP ranges we configured on master node. Let's
+    # use the first one and try.
+    slave.ssh.host = "10.0.3.100"
+  end
+end

@@ -1,0 +1,9 @@
+- name: ensure ip forwarding is enabled
+  sysctl: name=net.ipv4.ip_forward value=1 state=present
+
+- name: ensure masquerading is enabled on external interface
+  iptables:
+    table: nat
+    chain: POSTROUTING
+    out_interface: "{{ router_external_interface }}"
+    jump: MASQUERADE

@@ -1,0 +1,23 @@
+- name: ensure pxelinux & syslinux are installed
+  apt: name={{ item }} state=installed
+  with_items:
+    - syslinux-common
+    - pxelinux
+
+- name: share firmware via tftp
+  copy: src={{ item }} dest={{ bootimage_dest }} remote_src=yes
+  with_items:
+    - /usr/lib/PXELINUX/pxelinux.0
+    - /usr/lib/syslinux/modules/bios/ldlinux.c32
+
+- name: ensure pxelinux.cfg/ directory exists
+  file: path={{ bootimage_dest }}/pxelinux.cfg state=directory
+
+- name: render default pxe configuration
+  template: src=pxelinux.cfg.j2 dest={{ bootimage_dest }}/pxelinux.cfg/default
+
+- name: ensure {{ bootimage_dest }}/bootimage directory exists
+  file: path={{ bootimage_dest }}/bootimage state=directory
+
+- name: download bootimage
+  unarchive: src={{ bootimage_src }} dest={{ bootimage_dest }}/bootimage/ copy=no

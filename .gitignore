@@ -1,0 +1,5 @@
+contrib/vagrant/.vagrant/
+contrib/vagrant/*.log
+
+# ansible temporary
+*.retry

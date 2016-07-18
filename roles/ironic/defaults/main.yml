@@ -1,0 +1,11 @@
+ironic_database_host: 127.0.0.1
+ironic_database_name: ironic
+ironic_database_user: ironic
+ironic_database_password: ironic
+
+ironic_rabbitmq_host: 127.0.0.1
+ironic_rabbitmq_user: ironic
+ironic_rabbitmq_password: ironic
+
+ironic_enabled_drivers: asgard_ansible_ipmi,asgard_ansible_fake
+ironic_asgard_driver: asgard_ansible_ipmi

@@ -1,0 +1,31 @@
+- name: setup router
+  become: true
+  hosts: routers
+  roles:
+    - router
+
+- name: setup database
+  become: true
+  hosts: databases
+  roles:
+    - mariadb
+
+- name: setup message broker
+  become: true
+  hosts: brokers
+  roles:
+    - rabbitmq
+
+- name: setup standalone ironic
+  become: true
+  hosts: ironic
+  roles:
+    - ironic
+
+- name: setup pxe server
+  become: true
+  hosts: pxeserver
+  roles:
+    - iscdhcp
+    - tftpdhpa
+    - bootimage

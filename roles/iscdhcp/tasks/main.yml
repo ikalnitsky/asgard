@@ -1,0 +1,10 @@
+- name: ensure package is at the latest version
+  apt: name=isc-dhcp-server state=latest
+
+- name: render service configuration
+  template: src=dhcpd.conf.j2 dest=/etc/dhcp/dhcpd.conf
+  notify:
+    - restart isc-dhcp-server
+
+- name: ensure service is running and enabled at boot
+  service: name=isc-dhcp-server state=started enabled=yes

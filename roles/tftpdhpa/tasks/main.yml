@@ -1,0 +1,13 @@
+- name: ensure package is at the latest version
+  apt: name=tftpd-hpa state=latest
+
+- name: ensure {{ tftpdhpa_root }} directory exists
+  file: path={{ tftpdhpa_root }} state=directory
+
+- name: render service configuration
+  template: src=tftpd-hpa.j2 dest=/etc/default/tftpd-hpa
+  notify:
+    - restart tftpd-hpa
+
+- name: ensure service is running and enabled at boot
+  service: name=tftpd-hpa state=started enabled=yes

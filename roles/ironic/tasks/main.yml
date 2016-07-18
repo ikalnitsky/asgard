@@ -1,0 +1,83 @@
+- name: ensure ironic dependencies are installed
+  apt: name={{ item }} state=present
+  with_items:
+    - ipmitool          # required by ironic conductor
+    - ansible           # required by ironic ansible driver
+    - python-libvirt    # required by ironic ansible driver
+    - python-mysqldb    # required by playbook
+    - python-pip        # required by playbook
+
+- name: ensure ironic is at the latest version
+  apt: name={{ item }} state=latest
+  with_items:
+    - ironic-api
+    - ironic-conductor
+    - python-ironicclient
+
+# It's really annoying to pass both auth token and ironic url each
+# time you want to use Ironic CLI. So let's pass them automatically
+# by setting appropriate environment variables.
+- name: pass auth token and ironic url via appropriate env variables
+  lineinfile:
+    dest: /etc/environment
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+    state: present
+  with_items:
+    - { key: "OS_AUTH_TOKEN", value: "none" }
+    - { key: "IRONIC_URL", value: "http://127.0.0.1:6385" }
+  when: noauth == true
+
+# So far Ironic Ansible Driver is on review and exists only on gerrit.
+# That means we can't simply install it using pip, and we need to brew
+# it first.
+- name: brew ironic-staging-driver by cloning and applying patches
+  command: "{{ item }} chdir=/tmp"
+  with_items:
+    - rm -rf ironic-staging-drivers
+    - git clone git://git.openstack.org/openstack/ironic-staging-drivers
+    - git -C ironic-staging-drivers fetch origin refs/changes/30/327530/7
+    - git -C ironic-staging-drivers checkout FETCH_HEAD
+
+- name: ensure ironic-staging-driver is installed
+  pip: name=file:///tmp/ironic-staging-drivers
+
+- name: ensure ironic-asgard-driver is at the latest version
+  pip: name=git+git://github.com/ikalnitsky/ironic-asgard-driver.git#egg=ironic_asgard_driver
+
+- name: ensure database is created
+  mysql_db:
+    name: "{{ ironic_database_name }}"
+    state: present
+    encoding: utf8
+    collation: utf8_general_ci
+
+- name: ensure database user is created
+  mysql_user:
+    name: "{{ ironic_database_user }}"
+    password: "{{ ironic_database_password }}"
+    host: "{{ ironic_database_host }}"
+    priv: "*.*:ALL"
+    state: present
+
+- name: ensure rabbitmq user is created
+  rabbitmq_user:
+    name: "{{ ironic_rabbitmq_user }}"
+    password: "{{ ironic_rabbitmq_password }}"
+    permissions: [{vhost: '/', configure_priv: '.*', read_priv: '.*', write_priv: '.*'}]
+    state: present
+
+- name: configure ironic
+  template: src=ironic.conf.j2 dest=/etc/ironic/ironic.conf
+  notify:
+    - restart ironic-api
+    - restart ironic-conductor
+
+- name: apply ironic database schema
+  command: ironic-dbsync --config-file /etc/ironic/ironic.conf upgrade
+
+- name: ensure ironic-api is running and enabled at boot
+  service: name=ironic-api state=started enabled=yes
+
+- name: ensure ironic-conductor is running and enabled at boot
+  service: name=ironic-conductor state=started enabled=yes

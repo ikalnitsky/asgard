@@ -1,0 +1,22 @@
+# {{ ansible_managed }}
+
+default-lease-time 600;
+max-lease-time 7200;
+allow bootp;
+
+
+{% for subnet in iscdhcp_subnets %}
+  subnet {{ subnet.cidr | ipaddr('network') }} netmask {{ subnet.cidr | ipaddr('netmask') }} {
+
+    {% for range in subnet.ranges %}
+    range {{ range[0] }} {{ range[1] }};
+    {% endfor %}
+
+    option routers {{ ', '.join(subnet.routers) }};
+    option broadcast-address {{ subnet.cidr | ipaddr('broadcast') }};
+    option domain-name-servers {{ subnet.dns | default('8.8.8.8') }};
+
+    next-server {{ subnet.pxeserver }};
+    filename "pxelinux.0";
+  }
+{% endfor %}

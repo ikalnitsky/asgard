@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+
+DEFAULT bootimage
+
+LABEL bootimage
+  KERNEL /bootimage/vmlinuz
+  APPEND initrd=/bootimage/initrd.img boot=live fetch=tftp://{{ bootimage_server }}/bootimage/root.squashfs ironic_api_url={{ bootimage_ironicapi }}
+  IPAPPEND 3

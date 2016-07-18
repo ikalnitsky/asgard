@@ -1,0 +1,21 @@
+noauth: true
+pxe_network: 10.0.3.0/24
+pxe_iprange: [10.0.3.100, 10.0.3.254]
+pxe_content: /srv/pxe
+
+mariadb_bind_address: "{{ hostvars[groups['databases'][0]]['ansible_all_ipv4_addresses'] | ipaddr(pxe_network) | first }}"
+
+ironic_rabbitmq_host: "{{ hostvars[groups['brokers'][0]]['ansible_all_ipv4_addresses'] | ipaddr(pxe_network) | first }}"
+ironic_database_host: "{{ mariadb_bind_address }}"
+
+iscdhcp_subnets:
+  - cidr: "{{ pxe_network }}"
+    ranges: ["{{ pxe_iprange }}"]
+    pxeserver: "{{ hostvars[groups['pxeserver'][0]]['ansible_all_ipv4_addresses'] | ipaddr(pxe_network) | first }}"
+    routers: "{{ hostvars[groups['routers'][0]]['ansible_all_ipv4_addresses'] | ipaddr(pxe_network) }}"
+
+tftpdhpa_root: "{{ pxe_content }}"
+
+bootimage_dest: "{{ pxe_content }}"
+bootimage_server: "{{ hostvars[groups['pxeserver'][0]]['ansible_all_ipv4_addresses'] | ipaddr(pxe_network) | first }}"
+bootimage_ironicapi: "http://{{ hostvars[groups['ironic'][0]]['ansible_all_ipv4_addresses'] | ipaddr(pxe_network) | first }}:6385/v1"

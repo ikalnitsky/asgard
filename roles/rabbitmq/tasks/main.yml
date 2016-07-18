@@ -1,0 +1,2 @@
+- name: ensure rabbitmq is at the latest version
+  apt: name=rabbitmq-server state=latest

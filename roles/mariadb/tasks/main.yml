@@ -1,0 +1,10 @@
+- name: ensure package is at the latest version
+  apt: name=mariadb-server state=latest
+
+- name: render service configuration
+  template: src=my.cnf.j2 dest=/etc/mysql/my.cnf
+  notify:
+    - restart mariadb
+
+- name: ensure service is started and enabled on boot
+  service: name=mysql state=started enabled=yes

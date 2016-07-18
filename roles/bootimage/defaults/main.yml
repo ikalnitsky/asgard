@@ -1,0 +1,2 @@
+bootimage_dest: /tmp
+bootimage_src: https://github.com/ikalnitsky/asgard-agent/releases/download/0.1.0-alpha/bootimage.tar.gz
