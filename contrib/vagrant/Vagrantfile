@@ -41,10 +41,10 @@ Vagrant.configure("2") do |config|
         ironic:     ["master"],
         pxeserver:  ["master"],
       }
+    end
 
-      master.vm.provider "virtualbox" do |vb|
-        vb.memory = 2048
-      end
+    master.vm.provider "virtualbox" do |vb|
+      vb.memory = 2048
     end
   end
 
